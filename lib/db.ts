@@ -1,6 +1,8 @@
 import { PrismaClient } from "./generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
+
+//* The adapter tells Prisma how to talk to the database runtime-wise — not what database it is.
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
 });
