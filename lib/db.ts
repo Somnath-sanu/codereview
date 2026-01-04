@@ -65,7 +65,7 @@ This was annoying and unportable.
 
 So JavaScript added:
 
-✅ globalThis = “the global object, no matter where you run”
+globalThis = “the global object, no matter where you run”
 
 In Node.js specifically
 These point to the same object
@@ -74,8 +74,8 @@ global === globalThis // true (in Node)
 
 But:
 
-global ❌ does NOT exist in browsers
+global does NOT exist in browsers
 
-globalThis ✅ exists everywhere
+globalThis exists everywhere
  * 
  */
