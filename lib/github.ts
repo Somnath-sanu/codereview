@@ -110,43 +110,6 @@ export const getRepositories = async (
   return data;
 };
 
-export const getGithubRepos = async (page = 1, search = "") => {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session) {
-      throw new Error("Unauthorized");
-    }
-
-    const token = await getGithubToken();
-
-    const octokit = new Octokit({
-      auth: token,
-    });
-
-    // Search query for user repos
-    const q = `user:${session.user.name} ${search} in:name fork:true archived:false`;
-
-    const { data } = await octokit.rest.search.repos({
-      q,
-      sort: "updated",
-      order: "desc",
-      per_page: 9,
-      page,
-    });
-
-    return {
-      repos: data.items,
-      totalCount: data.total_count,
-    };
-  } catch (error) {
-    console.error("Error fetching repos:", error);
-    return { repos: [], totalCount: 0 };
-  }
-};
-
 export const createWebhook = async (owner: string, repo: string) => {
   const token = await getGithubToken();
   const octokit = new Octokit({
@@ -344,6 +307,6 @@ export const postReviewComment = async (
     owner,
     repo,
     issue_number: prN,
-    body: `AI code review\n\n${review}\n\nPowered by your effort`,
+    body: `AI code review ✈️\n\n${review}\n\nPowered by codecat 😸`,
   });
 };
