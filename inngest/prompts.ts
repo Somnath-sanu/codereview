@@ -63,7 +63,7 @@ Analyze the changes and provide a code review with the following structure:
 4.  **Strengths**: What's done well.
 5.  **Issues**: Bugs, security concerns, code smells.
 6.  **Suggestions**: Specific code improvements.
-7.  **Poem (Final Verdict)** (in character): A closing creative poem.
+7.  **Poem (Final Verdict)** (in character): A closing creative poem, short and attractive.
 
 Format your response in markdown.
 Make it crazy and unique based on the persona!
