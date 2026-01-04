@@ -56,13 +56,13 @@ export const generateReview = inngest.createFunction(
               model: google("gemini-2.5-flash"),
               prompt: `
 You are an experienced software engineer.
-Based ONLY on the following git diff, write a high-quality Pull Request description.
+Based ONLY on the following git diff, write a high-quality Pull Request description, short and clear.
 
 Follow best practices:
 - Clear summary
-- Motivation
+- Clear motivation
 - What changed
-- Any risks or follow-ups
+- Any dependencies added
 
 Diff:
 \`\`\`diff
