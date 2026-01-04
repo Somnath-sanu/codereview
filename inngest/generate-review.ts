@@ -9,9 +9,10 @@ import {
 import { retriveContent } from "@/lib/rag";
 import { generateText } from "ai";
 import { google } from "@ai-sdk/google";
+import { generateReviewPrompt } from "@/inngest/prompts";
 
 export const generateReview = inngest.createFunction(
-  { id: "generate-review", concurrency: 5 },
+  { id: "generate-review" },
   { event: "pr.review.requested" },
 
   async ({ event, step }) => {
@@ -82,29 +83,24 @@ ${diff}
           });
 
     const review = await step.run("generate-ai-review", async () => {
-      const prompt = `You are an expert code reviewer. Analyze the following pull request and provide a detailed, constructive code review.
+      const repository = await prisma.repository.findFirst({
+        where: {
+          owner,
+          name: repo,
+        },
+      });
 
-PR Title: ${title}
-PR Description: ${effectiveDescription}
+      const theme = repository?.codeReviewTheme || "Standard";
+      const personality = repository?.codeReviewPersonality || "Professional";
 
-Context from Codebase:
-${context.join("\n\n")}
-
-Code Changes:
-\`\`\`diff
-${diff}
-\`\`\`
-
-Please provide:
-1. **Walkthrough**: A file-by-file explanation of the changes.
-2. **Sequence Diagram**: A Mermaid JS sequence diagram visualizing the flow of the changes (if applicable). Use \`\`\`mermaid ... \`\`\` block. **IMPORTANT**: Ensure the Mermaid syntax is valid. Do not use special characters (like quotes, braces, parentheses) inside Note text or labels as it breaks rendering. Keep the diagram simple.
-3. **Summary**: Brief overview.
-4. **Strengths**: What's done well.
-5. **Issues**: Bugs, security concerns, code smells.
-6. **Suggestions**: Specific code improvements.
-7. **Poem**: A short, creative poem summarizing the changes at the very end.
-
-Format your response in markdown.`;
+      const prompt = generateReviewPrompt(
+        title,
+        effectiveDescription,
+        context.filter(Boolean) as string[],
+        diff,
+        theme,
+        personality
+      );
 
       const { text } = await generateText({
         model: google("gemini-2.5-flash"),

@@ -78,21 +78,25 @@ enum RepositoryStatus {
 }
 
 model Repository {
-  id       String @id @default(cuid())
-  githubId BigInt @unique
+  id       String           @id @default(cuid())
+  githubId BigInt           @unique
   name     String
   owner    String
   url      String
   fullName String
   status   RepositoryStatus @default(Indexing)
-  userId   String
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  codeReviewTheme       String @default("Standard") // e.g., "Pirate", "Shakespeare"
+  codeReviewPersonality String @default("Professional") // e.g., "Ruthless", "Kind"
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   reviews   Review[]
 
-  @@index([userId,githubId])
+  @@index([userId, githubId])
   @@map("repository")
 }
 

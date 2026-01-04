@@ -1,35 +1,32 @@
-"use client";
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { connectRepository, disconnectRepository } from "../actions";
+import { updateRepositorySettings } from "../actions";
 import { toast } from "sonner";
 
-export const useConnectRepo = () => {
+
+export const useUpdateRepo = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
-      owner,
-      repo,
-      githubId,
+      repoId,
+      theme,
+      personality,
     }: {
-      owner: string;
-      repo: string;
-      githubId: number;
+      repoId: string;
+      theme: string;
+      personality: string;
     }) => {
-      return await connectRepository(owner, repo, githubId);
+      return await updateRepositorySettings(repoId, theme, personality);
     },
     onSuccess: () => {
-      toast.success("Repo connected!");
+      toast.success("Repo updated!");
       queryClient.invalidateQueries({
         queryKey: ["repositories"],
       });
     },
     onError: (error) => {
-      toast.error("Failed to connect");
+      toast.error("Failed to update");
       console.error(error);
     },
-  });
-};
-
-
+  })
+}
