@@ -71,6 +71,12 @@ model Verification {
   @@map("verification")
 }
 
+enum RepositoryStatus {
+  Indexing
+  Indexed
+  Failed
+}
+
 model Repository {
   id       String @id @default(cuid())
   githubId BigInt @unique
@@ -78,6 +84,7 @@ model Repository {
   owner    String
   url      String
   fullName String
+  status   RepositoryStatus @default(Indexing)
   userId   String
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -85,7 +92,7 @@ model Repository {
   updatedAt DateTime @updatedAt
   reviews   Review[]
 
-  @@index([userId])
+  @@index([userId,githubId])
   @@map("repository")
 }
 

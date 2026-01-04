@@ -5,7 +5,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { requireAuth } from "@/modules/auth/utils/auth-utils";
+import { requireAuth } from "@/features/auth/utils/auth-utils";
 
 const Layout = async ({ children }: { children: React.ReactNode }) => {
   await requireAuth();

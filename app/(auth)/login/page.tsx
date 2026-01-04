@@ -1,5 +1,5 @@
-import { LoginPage } from "@/modules/auth/components/login-ui";
-import { requireUnAuth } from "@/modules/auth/utils/auth-utils";
+import { LoginPage } from "@/features/auth/components/login-ui";
+import { requireUnAuth } from "@/features/auth/utils/auth-utils";
 
 
 const Page = async () => {

@@ -2,7 +2,6 @@
 
 import { inngest } from "@/inngest/client";
 import prisma from "@/lib/db";
-import { getPullReqDiff } from "@/modules/github/lib/github";
 
 export const reviewPullReq = async (
   owner: string,
@@ -40,13 +39,6 @@ export const reviewPullReq = async (
     if (!accessToken) {
       throw new Error("token not found");
     }
-
-    const { title, description, diff } = await getPullReqDiff(
-      accessToken,
-      owner,
-      repo,
-      prN
-    );
 
     await inngest.send({
       name: "pr.review.requested",

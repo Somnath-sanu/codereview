@@ -9,8 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useConnectRepo } from "@/modules/repo/hooks/use-connect-repo";
-import { useRepositories } from "@/modules/repo/hooks/use-repo";
+import {
+  useConnectRepo,
+  useDisconnectRepo,
+} from "@/features/repo/hooks/use-connect-repo";
+import { useRepositories } from "@/features/repo/hooks/use-repo";
 import { ExternalLinkIcon } from "lucide-react";
 
 interface Repo {
@@ -33,14 +36,28 @@ const RepoPage = () => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useRepositories();
+  } = useRepositories(); // not-connected-repos || github repos
 
   const allRepos = data?.pages.flatMap((page) => page) || [];
 
   const connectRepo = useConnectRepo();
+  const disconnectRepo = useDisconnectRepo();
 
   const handleConnnect = (repo: any) => {
     connectRepo.mutate(
+      {
+        owner: repo.full_name.split("/")[0],
+        repo: repo.name,
+        githubId: repo.id,
+      },
+      {
+        onSettled: () => {},
+      }
+    );
+  };
+
+  const handleDisconnect = (repo: any) => {
+    disconnectRepo.mutate(
       {
         owner: repo.full_name.split("/")[0],
         repo: repo.name,
@@ -65,9 +82,9 @@ const RepoPage = () => {
                     <Badge variant={"outline"}>
                       {repo.language || "Unknown"}
                     </Badge>
-                    {repo.isConnected && (
+                    {/* {repo.isConnected && (
                       <Badge variant={"secondary"}>Connected</Badge>
-                    )}
+                    )} */}
                   </div>
                   <CardDescription>{repo.description}</CardDescription>
                 </div>
@@ -83,9 +100,7 @@ const RepoPage = () => {
                     </a>
                   </Button>
 
-                  <Button onClick={() => handleConnnect(repo)}>
-                    {repo.isConnected ? "Connected" : "Not connected"}
-                  </Button>
+                  <Button onClick={() => handleConnnect(repo)}>Connect</Button>
                 </div>
               </div>
             </CardHeader>

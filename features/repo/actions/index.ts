@@ -3,7 +3,11 @@
 import { inngest } from "@/inngest/client";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
-import { createWebhook, getRepositories } from "@/modules/github/lib/github";
+import {
+  createWebhook,
+  getRepositories,
+  removeWebhook,
+} from "@/lib/github";
 import { headers } from "next/headers";
 
 export const fetchRepos = async (page: number = 1, perPage: number = 10) => {
@@ -25,10 +29,11 @@ export const fetchRepos = async (page: number = 1, perPage: number = 10) => {
 
   const connectedRepoIds = new Set(dbRepos.map((repo) => repo.githubId));
 
-  return githubRepos.map((repo) => ({
-    ...repo,
-    isConnected: connectedRepoIds.has(BigInt(repo.id)),
-  }));
+  const nonDbRepos = githubRepos.filter(
+    (repo) => !connectedRepoIds.has(BigInt(repo.id))
+  );
+
+  return nonDbRepos;
 };
 
 export const connectRepository = async (
@@ -63,14 +68,43 @@ export const connectRepository = async (
     await inngest.send({
       name: "repos.connected",
       data: {
+        githubId,
         owner,
         repo,
-        userId: session.user.id
-      }
-    })
+        userId: session.user.id,
+      },
+    });
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
 
   return webhook;
+};
+
+export const disconnectRepository = async (
+  owner: string,
+  repo: string,
+  githubId: number
+) => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  await Promise.all([
+    prisma.repository.deleteMany({
+      where: {
+        githubId: BigInt(githubId),
+        userId: session.user.id,
+      },
+    }),
+    await removeWebhook(owner, repo),
+  ]);
+
+  return {
+    success: true,
+  };
 };

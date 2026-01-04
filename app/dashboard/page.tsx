@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   getDashboardStats,
   getMonthlyCommits,
-} from "@/modules/dashboard/actions";
+} from "@/features/dashboard/actions";
 import { useQuery } from "@tanstack/react-query";
 import { GitBranchIcon } from "lucide-react";
 

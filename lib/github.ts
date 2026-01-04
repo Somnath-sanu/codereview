@@ -142,14 +142,53 @@ export const createWebhook = async (owner: string, repo: string) => {
   return data;
 };
 
+export const removeWebhook = async (owner: string, repo: string) => {
+  const token = await getGithubToken();
+  const octokit = new Octokit({
+    auth: token,
+  });
+
+  const webhookUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhooks/github`;
+
+  const { data: hooks } = await octokit.rest.repos.listWebhooks({
+    owner,
+    repo,
+  });
+
+  const existingHook = hooks.find((hook) => hook.config.url === webhookUrl);
+
+  if (existingHook) {
+    await octokit.rest.repos.deleteWebhook({
+      owner,
+      repo,
+      hook_id: existingHook.id,
+    });
+  }
+};
+
+type RepoFile = {
+  path: string;
+  content: string;
+};
+
+const BINARY_EXTENSIONS = /\.(png|jpe?g|gif|svg|pdf|zip|exe|ico)$/i;
+
 export const getRepoFiles = async (
   token: string,
   owner: string,
   repo: string,
-  path: string = ""
-): Promise<{ path: string; content: string }[]> => {
+  path = ""
+): Promise<RepoFile[]> => {
   const octokit = new Octokit({ auth: token });
+  return fetchPath(octokit, owner, repo, path);
+};
 
+const fetchPath = async (
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  path: string
+): Promise<RepoFile[]> => {
   const { data } = await octokit.rest.repos.getContent({
     owner,
     repo,
@@ -157,47 +196,55 @@ export const getRepoFiles = async (
   });
 
   if (!Array.isArray(data)) {
-    if (data.type === "file" && data.content) {
-      return [
-        {
-          path: data.path,
-          content: Buffer.from(data.content, "base64").toString("utf-8"),
-        },
-      ];
-    }
-    return [];
+    if (data.type !== "file" || !data.content) return [];
+
+    if (BINARY_EXTENSIONS.test(data.path)) return [];
+
+    return [
+      {
+        path: data.path,
+        content: Buffer.from(data.content, "base64").toString("utf-8"),
+      },
+    ];
   }
 
-  let files: { path: string; content: string }[] = [];
+  const results = await Promise.all(
+    data.map(async (item) => {
+      if (item.type === "dir") {
+        return fetchPath(octokit, owner, repo, item.path);
+      }
 
-  for (const item of data) {
-    if (item.type === "file") {
-      const { data: fileData } = await octokit.rest.repos.getContent({
-        owner,
-        repo,
-        path: item.path,
-      });
+      if (item.type === "file") {
+        if (BINARY_EXTENSIONS.test(item.path)) return [];
 
-      if (
-        !Array.isArray(fileData) &&
-        fileData.type === "file" &&
-        fileData.content
-      ) {
-        if (!item.path.match(/\.(png|jpg|svg|io|pdf|zip)$/i)) {
-          files.push({
+        const { data: fileData } = await octokit.rest.repos.getContent({
+          owner,
+          repo,
+          path: item.path,
+        });
+
+        if (
+          Array.isArray(fileData) ||
+          fileData.type !== "file" ||
+          !fileData.content
+        ) {
+          return [];
+        }
+
+        return [
+          {
             path: item.path,
             content: Buffer.from(fileData.content, "base64").toString("utf-8"),
-          });
-        }
+          },
+        ];
       }
-    } else if (item.type === "dir") {
-      const subfiles = await getRepoFiles(token, owner, repo, item.path);
 
-      files = files.concat(subfiles);
-    }
-  }
+      return [];
+    })
+  );
 
-  return files;
+  // Flatten results
+  return results.flat();
 };
 
 export const getPullReqDiff = async (
@@ -230,6 +277,22 @@ export const getPullReqDiff = async (
   };
 };
 
+export const updatePullRequestDescription = async (
+  token: string,
+  owner: string,
+  repo: string,
+  prNumber: number,
+  body: string
+) => {
+  const octokit = new Octokit({ auth: token });
+
+  await octokit.rest.pulls.update({
+    owner,
+    repo,
+    pull_number: prNumber,
+    body,
+  });
+};
 
 export const postReviewComment = async (
   token: string,
@@ -238,12 +301,12 @@ export const postReviewComment = async (
   prN: number,
   review: string
 ) => {
-   const octokit = new Octokit({ auth: token });
+  const octokit = new Octokit({ auth: token });
 
-   await octokit.rest.issues.createComment({
+  await octokit.rest.issues.createComment({
     owner,
     repo,
     issue_number: prN,
-    body: `AI code review\n\n${review}\n\nPowered by your effort`
-   })
-}
+    body: `AI code review\n\n${review}\n\nPowered by your effort`,
+  });
+};

@@ -3,50 +3,12 @@ import { inngest } from "./client";
 import { NonRetriableError } from "inngest";
 import {
   getPullReqDiff,
-  getRepoFiles,
   postReviewComment,
-} from "@/modules/github/lib/github";
-import { indexCodebase, retriveContent } from "@/modules/ai/lib/rag";
+  updatePullRequestDescription,
+} from "@/lib/github";
+import { retriveContent } from "@/lib/rag";
 import { generateText } from "ai";
 import { google } from "@ai-sdk/google";
-
-export const indexRepo = inngest.createFunction(
-  {
-    id: "index-repo",
-  },
-  { event: "repos.connected" },
-  async ({ event, step }) => {
-    const { owner, repo, userId } = event.data;
-
-    // files
-    const files = await step.run("fetch-files", async () => {
-      const account = await prisma.account.findFirst({
-        where: {
-          userId,
-          providerId: "github",
-        },
-        select: {
-          accessToken: true,
-        },
-      });
-
-      if (!account?.accessToken) {
-        throw new NonRetriableError("Access token not found");
-      }
-
-      return await getRepoFiles(account.accessToken, owner, repo);
-    });
-
-    await step.run("index-codebase", async () => {
-      await indexCodebase(`${owner}/${repo}`, files);
-    });
-
-    return {
-      success: true,
-      indexedFiles: files.length,
-    };
-  }
-);
 
 export const generateReview = inngest.createFunction(
   { id: "generate-review", concurrency: 5 },
@@ -66,7 +28,7 @@ export const generateReview = inngest.createFunction(
         });
 
         if (!account?.accessToken) {
-          throw new Error("No GitHub access token found");
+          throw new NonRetriableError("No GitHub access token found");
         }
 
         const data = await getPullReqDiff(
@@ -85,11 +47,45 @@ export const generateReview = inngest.createFunction(
       return await retriveContent(query, `${owner}/${repo}`);
     });
 
+    const effectiveDescription =
+      description?.trim().length > 0
+        ? description
+        : await step.run("generate-and-update-pr-description", async () => {
+            const { text } = await generateText({
+              model: google("gemini-2.5-flash"),
+              prompt: `
+You are an experienced software engineer.
+Based ONLY on the following git diff, write a high-quality Pull Request description.
+
+Follow best practices:
+- Clear summary
+- Motivation
+- What changed
+- Any risks or follow-ups
+
+Diff:
+\`\`\`diff
+${diff}
+\`\`\`
+`,
+            });
+
+            await updatePullRequestDescription(
+              token,
+              owner,
+              repo,
+              prNumber,
+              text
+            );
+
+            return text;
+          });
+
     const review = await step.run("generate-ai-review", async () => {
       const prompt = `You are an expert code reviewer. Analyze the following pull request and provide a detailed, constructive code review.
 
 PR Title: ${title}
-PR Description: ${description || "No description provided"}
+PR Description: ${effectiveDescription}
 
 Context from Codebase:
 ${context.join("\n\n")}

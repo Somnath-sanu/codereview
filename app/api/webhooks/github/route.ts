@@ -1,4 +1,4 @@
-import { reviewPullReq } from "@/modules/ai/actions";
+import { reviewPullReq } from "@/app/api/webhooks/github/review";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {

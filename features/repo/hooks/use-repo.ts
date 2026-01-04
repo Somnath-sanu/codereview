@@ -3,6 +3,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { fetchRepos } from "../actions";
 
+
 export const useRepositories = () => {
   return useInfiniteQuery({
     queryKey: ["repositories"],
