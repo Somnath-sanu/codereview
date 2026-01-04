@@ -1,10 +1,8 @@
-"use client";
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { connectRepository, disconnectRepository } from "../actions";
+import { disconnectRepository } from "../actions";
 import { toast } from "sonner";
 
-export const useConnectRepo = () => {
+export const useDisconnectRepo = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -17,19 +15,17 @@ export const useConnectRepo = () => {
       repo: string;
       githubId: number;
     }) => {
-      return await connectRepository(owner, repo, githubId);
+      return await disconnectRepository(owner, repo, githubId);
     },
     onSuccess: () => {
-      toast.success("Repo connected!");
+      toast.success("Repo disconnected!");
       queryClient.invalidateQueries({
         queryKey: ["repositories"],
       });
     },
     onError: (error) => {
-      toast.error("Failed to connect");
+      toast.error("Failed to disconnect");
       console.error(error);
     },
   });
 };
-
-

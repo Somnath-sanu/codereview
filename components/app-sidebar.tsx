@@ -7,8 +7,7 @@ import { Sidebar, SidebarContent, SidebarHeader } from "./ui/sidebar";
 export const AppSidebar = () => {
   const [mounted, setMounted] = useState(false);
 
-  const getSession = useSession;
-  const {data: session} = getSession.get()
+  const {data: session} = useSession()
 
   useEffect(() => {
     setMounted(true);

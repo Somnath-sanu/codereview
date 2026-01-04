@@ -11,9 +11,9 @@ import {
 } from "@/components/ui/card";
 import {
   useConnectRepo,
-  useDisconnectRepo,
 } from "@/features/repo/hooks/use-connect-repo";
-import { useRepositories } from "@/features/repo/hooks/use-repo";
+import { useDisconnectRepo } from "@/features/repo/hooks/use-disconnect-repo";
+import { useGithubRepositories } from "@/features/repo/hooks/use-repo";
 import { ExternalLinkIcon } from "lucide-react";
 
 interface Repo {
@@ -36,7 +36,7 @@ const RepoPage = () => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useRepositories(); // not-connected-repos || github repos
+  } = useGithubRepositories(); // not-connected-repos || github repos
 
   const allRepos = data?.pages.flatMap((page) => page) || [];
 

@@ -2,10 +2,8 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import {
-  fetchUserContribution,
-  getGithubToken,
-} from "@/lib/github";
+import prisma from "@/lib/db";
+import { fetchUserContribution, getGithubToken } from "@/lib/github";
 import { headers } from "next/headers";
 import { Octokit } from "octokit";
 
