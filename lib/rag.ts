@@ -20,6 +20,7 @@ export const indexCodebase = async (
 ) => {
   const namespace = pineconeIndex.namespace(repoId);
 
+  // TODO: check whether this working or not
   const namespaces = await pineconeIndex.listNamespaces();
   const exists = namespaces.namespaces?.some(
     (ns) => ns.name === namespace.namespace.name
